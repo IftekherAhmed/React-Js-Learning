@@ -1,20 +1,20 @@
 import React from 'react'
 
-export default function Card() {
+export default function Card(props) {
+    const { title, description, imageUrl } = props
+
   return (
     <div className="rounded-md shadow-md bg-black text-gray-100">
       <img
-        src="https://picsum.photos/301"
+        src={imageUrl || "https://picsum.photos/301"}
         alt=""
         className="object-cover object-center w-full rounded-t-md h-72 bg-gray-500"
       />
       <div className="flex flex-col justify-between p-6 space-y-8">
         <div className="space-y-2">
-          <h2 className="text-3xl font-semibold tracking-wide">Lorem</h2>
+          <h2 className="text-3xl font-semibold tracking-wide">{title}</h2>
           <p className="text-gray-400">
-            Lorem ipsum dolor sit amet consectetur, adipisicing elit. Distinctio
-            tempora ipsum soluta amet corporis accusantium aliquid consectetur
-            eaque!
+            {description}
           </p>
         </div>
         <button
