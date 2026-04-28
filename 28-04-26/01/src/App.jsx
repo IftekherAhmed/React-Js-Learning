@@ -1,22 +1,23 @@
 import { useState, useCallback, useEffect, useRef } from 'react';
 
 function App() {
-  const [length, setLength] = useState(8);
+  const [length,        setLength] = useState(8);
   const [numberAllowed, setNumberAllowed] = useState(false);
-  const [charAllowed, setCharAllowed] = useState(false);
-  const [password, setPassword] = useState("");
+  const [charAllowed,   setCharAllowed] = useState(false);
+  const [password,      setPassword] = useState("");
 
   const passwordRef = useRef(null);
 
   const generatePassword = useCallback(() => {
     let pass = "";
-    let str = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+    let str  = "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
     
     // 1. Create a "Guaranteed" array
     let guaranteedChars = [];
 
     if (numberAllowed) {
       str += "0123456789";
+
       // Pick one random number immediately
       const nums = "0123456789";
       guaranteedChars.push(nums.charAt(Math.floor(Math.random() * nums.length)));
@@ -24,6 +25,7 @@ function App() {
 
     if (charAllowed) {
       str += "!@#$%^&*-_+=[]{}~`";
+
       // Pick one random character immediately
       const chars = "!@#$%^&*-_+=[]{}~`";
       guaranteedChars.push(chars.charAt(Math.floor(Math.random() * chars.length)));
@@ -90,7 +92,7 @@ function App() {
           <div className="flex items-center gap-x-4">
             <input 
               type="range" 
-              min={6} max={50} 
+              min={6} max={20} 
               value={length} 
               className="cursor-pointer accent-orange-500 w-full"
               onChange={(e) => setLength(e.target.value)} 
@@ -99,7 +101,7 @@ function App() {
           </div>
 
           {/* Toggles & Refresh */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center gap-x-6">
             <div className="flex items-center gap-x-2">
               <input 
                 type="checkbox" 
