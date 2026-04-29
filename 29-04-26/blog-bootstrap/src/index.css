@@ -1,0 +1,16 @@
+/* Custom styles for Bootstrap blog */
+.hover-primary:hover {
+  color: #0d6efd !important;
+}
+
+.hover-white:hover {
+  color: #fff !important;
+}
+
+.transition-opacity {
+  transition: opacity 1s ease-in-out;
+}
+
+body {
+  font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+}
