@@ -68,7 +68,7 @@ const Search = () => {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <h1 className="text-4xl font-bold text-gray-900 mb-8 text-center">Search Posts</h1>
 
         {/* Search Input */}
@@ -106,7 +106,7 @@ const Search = () => {
               Found {filteredPosts.length} result{filteredPosts.length !== 1 ? 's' : ''} for "{query}"
             </p>
             {filteredPosts.length > 0 ? (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
                 {filteredPosts.map((post) => (
                   <PostCard key={post.id} post={post} />
                 ))}
