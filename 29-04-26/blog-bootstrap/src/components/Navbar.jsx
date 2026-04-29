@@ -4,12 +4,14 @@ import { Menu, X, Search } from 'lucide-react';
 
 const Navbar = () => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // State for search query and results
   const [searchQuery, setSearchQuery] = useState('');
   const [searchResults, setSearchResults] = useState([]);
   const [allPosts, setAllPosts] = useState([]);
   const [isSearchFocused, setIsSearchFocused] = useState(false);
-  const location = useLocation();
-  const navigate = useNavigate();
 
   const navLinks = [
     { name: 'Home', path: '/' },
@@ -20,6 +22,9 @@ const Navbar = () => {
 
   const isActive = (path) => location.pathname === path;
 
+
+  // useEffect to fetch posts only once on component mount 
+  // It is used for client-side search filtering in navbar dropdown
   useEffect(() => {
     const fetchPosts = async () => {
       try {
@@ -34,6 +39,8 @@ const Navbar = () => {
     fetchPosts();
   }, []);
 
+  // It is used to update search results in real-time as user types
+  // useEffect to filter posts based on search query
   useEffect(() => {
     if (searchQuery.trim()) {
       const filtered = allPosts.filter(
@@ -47,6 +54,8 @@ const Navbar = () => {
     }
   }, [searchQuery, allPosts]);
 
+  // Handle search form submission
+  // Navigates to search page with query parameter
   const handleSearchSubmit = (e) => {
     e.preventDefault();
     if (searchQuery.trim()) {
@@ -56,6 +65,9 @@ const Navbar = () => {
     }
   };
 
+  // Handle click on search result item
+  // Navigates directly to the selected post
+  // Clears search state and closes dropdown
   const handleResultClick = (postId) => {
     navigate(`/post/${postId}`);
     setSearchQuery('');
@@ -79,6 +91,7 @@ const Navbar = () => {
 
         <div className={`collapse navbar-collapse ${isMenuOpen ? 'show' : ''}`}>
           <ul className="navbar-nav ms-auto align-items-center">
+            {/* Nav Links */}
             {navLinks.map((link) => (
               <li className="nav-item" key={link.path}>
                 <Link
@@ -89,7 +102,9 @@ const Navbar = () => {
                 </Link>
               </li>
             ))}
-            
+            {/* End Nav link */}
+
+            {/* Search Form */}
             <li className="nav-item ms-3 position-relative">
               <form onSubmit={handleSearchSubmit}>
                 <div className="position-relative">
@@ -105,7 +120,9 @@ const Navbar = () => {
                   />
                 </div>
               </form>
+              {/* End Search Form */}
 
+              {/* Search Results */}
               {isSearchFocused && searchResults.length > 0 && (
                 <div className="card shadow position-absolute mt-2" style={{width: '400px', zIndex: 1000}}>
                   <div className="list-group list-group-flush">
@@ -130,12 +147,15 @@ const Navbar = () => {
                   </div>
                 </div>
               )}
+              {/* End Search Results */}
 
+              {/* No Search Results */}
               {isSearchFocused && searchQuery && searchResults.length === 0 && (
                 <div className="card shadow position-absolute mt-2 p-3 text-center" style={{width: '400px', zIndex: 1000}}>
                   <p className="text-muted mb-0">No posts found</p>
                 </div>
               )}
+              {/* End No Search Results */}
             </li>
           </ul>
         </div>
