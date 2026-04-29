@@ -3,6 +3,10 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 
 const HeroSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
+  
+  // New state for drag logic
+  const [touchStart, setTouchStart] = useState(null);
+  const [touchEnd, setTouchEnd] = useState(null);
 
   const slides = [
     {
@@ -25,7 +29,26 @@ const HeroSlider = () => {
     },
   ];
 
-  // Auto-advance slides every 5 seconds
+  // Drag logic functions
+  const handleTouchStart = (e) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches ? e.targetTouches[0].clientX : e.clientX);
+  };
+
+  const handleTouchMove = (e) => {
+    setTouchEnd(e.targetTouches ? e.targetTouches[0].clientX : e.clientX);
+  };
+
+  const handleTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > 50;
+    const isRightSwipe = distance < -50;
+
+    if (isLeftSwipe) goToNext();
+    if (isRightSwipe) goToPrev();
+  };
+
   useEffect(() => {
     const timer = setInterval(() => {
       setCurrentSlide((prev) => (prev + 1) % slides.length);
@@ -47,7 +70,15 @@ const HeroSlider = () => {
   };
 
   return (
-    <div className="relative h-96 md:h-[500px] overflow-hidden rounded-b-2xl">
+    <div 
+      className="relative h-96 md:h-[500px] overflow-hidden rounded-b-2xl cursor-grab active:cursor-grabbing"
+      onMouseDown={handleTouchStart}
+      onMouseMove={handleTouchMove}
+      onMouseUp={handleTouchEnd}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Slides */}
       {slides.map((slide, index) => (
         <div
@@ -56,8 +87,8 @@ const HeroSlider = () => {
             index === currentSlide ? 'opacity-100' : 'opacity-0'
           }`}
         >
-          <div className={`h-full bg-gradient-to-r ${slide.gradient} flex items-center justify-center`}>
-            <div className="text-center text-white px-4">
+          <div className={`h-full bg-gradient-to-r ${slide.gradient} flex items-center justify-center select-none`}>
+            <div className="text-center text-white px-4 pointer-events-none">
               <h1 className="text-4xl md:text-6xl font-bold mb-4 animate-fade-in">
                 {slide.title}
               </h1>
@@ -72,21 +103,21 @@ const HeroSlider = () => {
       {/* Navigation Arrows */}
       <button
         onClick={goToPrev}
-        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm p-2 rounded-full transition-colors"
+        className="absolute left-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm p-2 rounded-full transition-colors z-10"
         aria-label="Previous slide"
       >
         <ChevronLeft className="h-6 w-6 text-white" />
       </button>
       <button
         onClick={goToNext}
-        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm p-2 rounded-full transition-colors"
+        className="absolute right-4 top-1/2 -translate-y-1/2 bg-white/20 hover:bg-white/30 backdrop-blur-sm p-2 rounded-full transition-colors z-10"
         aria-label="Next slide"
       >
         <ChevronRight className="h-6 w-6 text-white" />
       </button>
 
       {/* Dots Indicator */}
-      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2">
+      <div className="absolute bottom-6 left-1/2 -translate-x-1/2 flex space-x-2 z-10">
         {slides.map((_, index) => (
           <button
             key={index}
