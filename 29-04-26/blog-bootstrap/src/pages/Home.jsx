@@ -3,12 +3,11 @@ import { Link } from 'react-router-dom';
 import HeroSlider from '../components/HeroSlider';
 import PostCard from '../components/PostCard';
 import SkeletonLoader from '../components/SkeletonLoader';
-import { useCategory } from '../context/CategoryContext';
+import { categories } from '../data/categories';
 
 const Home = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const { categories } = useCategory();
 
   useEffect(() => {
     document.title = 'BlogHub - Home | Modern Blog Platform';

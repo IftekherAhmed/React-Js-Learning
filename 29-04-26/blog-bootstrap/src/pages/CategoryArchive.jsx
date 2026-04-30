@@ -2,12 +2,11 @@ import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PostCard from '../components/PostCard';
 import SkeletonLoader from '../components/SkeletonLoader';
-import { useCategory } from '../context/CategoryContext';
+import { categories } from '../data/categories';
 import { ArrowLeft } from 'lucide-react';
 
 const CategoryArchive = () => {
   const { slug } = useParams();
-  const { categories } = useCategory();
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
