@@ -1,7 +1,10 @@
+import { memo } from 'react';
 import { Link } from 'react-router-dom';
 import { Calendar, Clock, User, Tag } from 'lucide-react';
+import { categories } from '../data/categories';
 
-const PostCard = ({ post }) => {
+// Memo prevents re-render if post prop hasn't changed
+const PostCard = memo(({ post }) => {
   const readingTime = Math.max(3, Math.floor((post.body?.length || 100) / 200));
   
   const formattedDate = new Date().toLocaleDateString('en-US', {
@@ -10,8 +13,8 @@ const PostCard = ({ post }) => {
     day: 'numeric',
   });
 
-  const categories = ['Technology', 'Design', 'Programming', 'Lifestyle', 'Business', 'Health'];
-  const category = categories[post.id % categories.length];
+  // Get category from imported data file
+  const category = categories[post.id % categories.length]?.name || 'Technology';
 
   return (
     <div className="card h-100 shadow-sm border-0">
@@ -31,7 +34,10 @@ const PostCard = ({ post }) => {
           <h5 className="card-title text-dark hover-primary">{post.title}</h5>
         </Link>
 
-        <p className="card-text text-muted">{post.body}</p>
+        {/* Truncate long post body */}
+        <p className="card-text text-muted">
+          {post.body?.length > 100 ? `${post.body.substring(0, 100)}...` : post.body}
+        </p>
 
         <div className="d-flex flex-wrap gap-3 small text-muted mb-3">
           <div className="d-flex align-items-center">
@@ -54,6 +60,8 @@ const PostCard = ({ post }) => {
       </div>
     </div>
   );
-};
+});
+
+PostCard.displayName = 'PostCard';
 
 export default PostCard;

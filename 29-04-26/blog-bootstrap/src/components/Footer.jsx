@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Link as LinkIcon, Share2, Mail, Heart } from 'lucide-react';
+import { categories } from '../data/categories';
 
 const Footer = () => {
   const currentYear = new Date().getFullYear();
@@ -40,10 +41,13 @@ const Footer = () => {
           <div className="col-md-3">
             <h5 className="fw-semibold mb-3">Categories</h5>
             <ul className="list-unstyled">
-              <li><Link to="/category/technology" className="text-secondary text-decoration-none">Technology</Link></li>
-              <li><Link to="/category/design" className="text-secondary text-decoration-none">Design</Link></li>
-              <li><Link to="/category/programming" className="text-secondary text-decoration-none">Programming</Link></li>
-              <li><Link to="/category/lifestyle" className="text-secondary text-decoration-none">Lifestyle</Link></li>
+              {categories.map((category) => (
+                <li key={category.id}>
+                  <Link to={`/category/${category.slug}`} className="text-secondary text-decoration-none">
+                    {category.name}
+                  </Link>
+                </li>
+              ))}
             </ul>
           </div>
         </div>

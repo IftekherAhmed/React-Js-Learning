@@ -1,32 +1,45 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
+
+// Static slides data - no need to recreate on every render
+const SLIDES = [
+  {
+    id: 1,
+    title: 'Welcome to BlogHub',
+    subtitle: 'Discover insights on technology, design, and programming',
+    image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1400&h=600&fit=crop',
+  },
+  {
+    id: 2,
+    title: 'Learn & Grow',
+    subtitle: 'Stay updated with the latest trends and best practices',
+    image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1400&h=600&fit=crop',
+  },
+  {
+    id: 3,
+    title: 'Join Our Community',
+    subtitle: 'Connect with developers and designers worldwide',
+    image: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1400&h=600&fit=crop',
+  },
+];
 
 const HeroSlider = () => {
   const [currentSlide, setCurrentSlide] = useState(0);
-  
   const [touchStart, setTouchStart] = useState(null);
   const [touchEnd, setTouchEnd] = useState(null);
 
-  const slides = [
-    {
-      id: 1,
-      title: 'Welcome to BlogHub',
-      subtitle: 'Discover insights on technology, design, and programming',
-      image: 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=1400&h=600&fit=crop',
-    },
-    {
-      id: 2,
-      title: 'Learn & Grow',
-      subtitle: 'Stay updated with the latest trends and best practices',
-      image: 'https://images.unsplash.com/photo-1518770660439-4636190af475?w=1400&h=600&fit=crop',
-    },
-    {
-      id: 3,
-      title: 'Join Our Community',
-      subtitle: 'Connect with developers and designers worldwide',
-      image: 'https://images.unsplash.com/photo-1461749280684-dccba630e2f6?w=1400&h=600&fit=crop',
-    },
-  ];
+  // Memoize navigation functions to prevent unnecessary re-renders
+  const goToSlide = useCallback((index) => {
+    setCurrentSlide(index);
+  }, []);
+
+  const goToPrev = useCallback(() => {
+    setCurrentSlide((prev) => (prev - 1 + SLIDES.length) % SLIDES.length);
+  }, []);
+
+  const goToNext = useCallback(() => {
+    setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
+  }, []);
 
   const handleTouchStart = (e) => {
     setTouchEnd(null);
@@ -49,23 +62,11 @@ const HeroSlider = () => {
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setCurrentSlide((prev) => (prev + 1) % slides.length);
+      setCurrentSlide((prev) => (prev + 1) % SLIDES.length);
     }, 5000);
 
     return () => clearInterval(timer);
-  }, [slides.length]);
-
-  const goToSlide = (index) => {
-    setCurrentSlide(index);
-  };
-
-  const goToPrev = () => {
-    setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
-  };
-
-  const goToNext = () => {
-    setCurrentSlide((prev) => (prev + 1) % slides.length);
-  };
+  }, []);
 
   return (
     <div 
@@ -78,7 +79,7 @@ const HeroSlider = () => {
       onTouchMove={handleTouchMove}
       onTouchEnd={handleTouchEnd}
     >
-      {slides.map((slide, index) => (
+      {SLIDES.map((slide, index) => (
         <div
           key={slide.id}
           className="position-absolute top-0 start-0 w-100 h-100 transition-opacity"
@@ -121,7 +122,7 @@ const HeroSlider = () => {
       </button>
 
       <div className="position-absolute bottom-0 start-50 translate-middle-x mb-4 d-flex gap-2" style={{zIndex: 10}}>
-        {slides.map((_, index) => (
+        {SLIDES.map((_, index) => (
           <button
             key={index}
             onClick={() => goToSlide(index)}

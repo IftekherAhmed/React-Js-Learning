@@ -1,4 +1,7 @@
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import ScrollToTop from './components/ScrollToTop';
+import BackToTop from './components/BackToTop';
+import ErrorBoundary from './components/ErrorBoundary';
 import Navbar from './components/Navbar';
 import Footer from './components/Footer';
 import Home from './pages/Home';
@@ -12,7 +15,11 @@ import Contact from './pages/Contact';
 function App() {
   return (
     <Router>
-      <div className="d-flex flex-column min-vh-100">
+      {/* ScrollToTop: Auto-scroll to top on route change */}
+      <ScrollToTop />
+      {/* ErrorBoundary: Catches errors and shows fallback UI */}
+      <ErrorBoundary>
+        <div className="d-flex flex-column min-vh-100">
         <Navbar />
         <main className="flex-grow-1">
           <Routes>
@@ -27,6 +34,9 @@ function App() {
         </main>
         <Footer />
       </div>
+      </ErrorBoundary>
+      {/* BackToTop: Floating button for quick scroll to top */}
+      <BackToTop />
     </Router>
   );
 }

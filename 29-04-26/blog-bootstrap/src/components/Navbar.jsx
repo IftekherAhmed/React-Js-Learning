@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Menu, X, Search, ChevronDown } from 'lucide-react';
 import { categories } from '../data/categories';
@@ -23,18 +23,17 @@ const Navbar = () => {
     { name: 'Contact', path: '/contact' },
   ];
 
-  // Check if current route matches link path (for active styling)
   const isActive = (path) => location.pathname === path;
 
 
-  // Fetch all posts once on mount - used for live search dropdown
-  // Empty [] means this runs ONLY when Navbar first loads
+  // useEffect to fetch posts only once on component mount 
+  // It is used for client-side search filtering in navbar dropdown
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const response = await fetch('https://jsonplaceholder.typicode.com/posts');
         const data = await response.json();
-        setAllPosts(data);  // Store all posts for client-side filtering
+        setAllPosts(data);
       } catch (error) {
         console.error('Error fetching posts for search:', error);
       }
@@ -43,39 +42,40 @@ const Navbar = () => {
     fetchPosts();
   }, []);
 
-  // Filter posts in real-time as user types in search box
-  // Runs every time searchQuery or allPosts changes
+  // It is used to update search results in real-time as user types
+  // useEffect to filter posts based on search query
   useEffect(() => {
     if (searchQuery.trim()) {
-      // Filter by title or body (case-insensitive)
       const filtered = allPosts.filter(
         (post) =>
           post.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
           post.body.toLowerCase().includes(searchQuery.toLowerCase())
       );
-      setSearchResults(filtered.slice(0, 5));  // Show max 5 results
+      setSearchResults(filtered.slice(0, 5));
     } else {
-      setSearchResults([]);  // Clear results if search is empty
+      setSearchResults([]);
     }
   }, [searchQuery, allPosts]);
 
-  // Handle search form submission - navigate to full search page
-  const handleSearchSubmit = (e) => {
-    e.preventDefault();  // Prevent form reload
+  // Handle search form submission
+  // Navigates to search page with query parameter
+  const handleSearchSubmit = useCallback((e) => {
+    e.preventDefault();
     if (searchQuery.trim()) {
-      // Navigate to search page with query parameter
       navigate(`/search?q=${encodeURIComponent(searchQuery)}`);
-      setSearchQuery('');  // Clear search input
-      setIsSearchFocused(false);  // Close dropdown
+      setSearchQuery('');
+      setIsSearchFocused(false);
     }
-  };
+  }, [searchQuery, navigate]);
 
-  // Handle click on search result - navigate directly to post
-  const handleResultClick = (postId) => {
-    navigate(`/post/${postId}`);  // Go to post detail page
-    setSearchQuery('');  // Clear search
-    setIsSearchFocused(false);  // Close dropdown
-  };
+  // Handle click on search result item
+  // Navigates directly to the selected post
+  // Clears search state and closes dropdown
+  const handleResultClick = useCallback((postId) => {
+    navigate(`/post/${postId}`);
+    setSearchQuery('');
+    setIsSearchFocused(false);
+  }, [navigate]);
 
   return (
     <nav className="navbar navbar-expand-md navbar-light bg-white shadow-sm sticky-top">
