@@ -4,34 +4,37 @@ import SkeletonLoader from '../components/SkeletonLoader';
 import { Calendar, Clock, User, ArrowLeft, Tag } from 'lucide-react';
 
 const PostDetail = () => {
-  const { id } = useParams();
+  const { id } = useParams();  // Get :id from URL (e.g., /post/5 → id = "5")
   const [post, setPost] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Fetch single post by ID - re-runs when :id changes in URL
+  // Dependency [id] means: fetch again if user navigates to different post
   useEffect(() => {
     const fetchPost = async () => {
       setLoading(true);
       try {
         const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
         const data = await response.json();
-        setPost(data);
+        setPost(data);  // Update state → triggers re-render with post data
       } catch (error) {
         console.error('Error fetching post:', error);
       } finally {
-        setLoading(false);
+        setLoading(false);  // Hide loading spinner
       }
     };
 
     fetchPost();
-  }, [id]);
+  }, [id]);  // ← IMPORTANT: Re-fetches when id changes
 
+  // Update page title when post data loads
   useEffect(() => {
     if (post) {
       document.title = `${post.title} - BlogHub`;
     } else {
       document.title = 'Loading Post... | BlogHub';
     }
-  }, [post]);
+  }, [post]);  // Runs when post state changes
 
   if (loading) {
     return <SkeletonLoader type="detail" />;
@@ -46,7 +49,7 @@ const PostDetail = () => {
     );
   }
 
-  // Calculate reading time
+  // Calculate reading time based on post body length (200 words per minute)
   const readingTime = Math.max(3, Math.floor((post.body?.length || 100) / 200));
   
   // Format date

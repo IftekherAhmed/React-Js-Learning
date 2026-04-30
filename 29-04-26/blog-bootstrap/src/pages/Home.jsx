@@ -9,20 +9,23 @@ const Home = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
 
+  // Set page title for SEO - runs once when component mounts
   useEffect(() => {
     document.title = 'BlogHub - Home | Modern Blog Platform';
   }, []);
 
+  // Fetch 6 posts from API - runs once when component mounts
+  // Empty dependency array [] means this runs ONLY on first render
   useEffect(() => {
     const fetchPosts = async () => {
       try {
         const response = await fetch('https://jsonplaceholder.typicode.com/posts?_limit=6');
         const data = await response.json();
-        setPosts(data);
+        setPosts(data);  // Update state with fetched posts → triggers re-render
       } catch (error) {
         console.error('Error fetching posts:', error);
       } finally {
-        setLoading(false);
+        setLoading(false);  // Hide loading spinner
       }
     };
 

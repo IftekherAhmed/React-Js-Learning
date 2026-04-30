@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react';
 
 const Contact = () => {
+  // Form state - single object for all fields
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -9,14 +10,17 @@ const Contact = () => {
     message: '',
   });
 
+  // Validation and submission state
   const [errors, setErrors] = useState({});
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
 
+  // Set page title on mount
   useEffect(() => {
     document.title = 'Contact Us - BlogHub';
   }, []);
 
+  // Validate form fields - returns errors object
   const validateForm = () => {
     const newErrors = {};
 
@@ -44,10 +48,12 @@ const Contact = () => {
     return Object.keys(newErrors).length === 0;
   };
 
+  // Handle input change - updates formData when user types
+  // Uses dynamic [e.target.name] to update correct field
   const handleChange = (e) => {
     setFormData({
-      ...formData,
-      [e.target.name]: e.target.value,
+      ...formData,  // Keep existing fields
+      [e.target.name]: e.target.value,  // Update changed field
     });
     // Clear error when user starts typing
     if (errors[e.target.name]) {
@@ -58,21 +64,23 @@ const Contact = () => {
     }
   };
 
+  // Handle form submission - validates and submits form
   const handleSubmit = async (e) => {
-    e.preventDefault();
+    e.preventDefault();  // Prevent page reload on submit
 
+    // Validate before submitting
     if (!validateForm()) {
-      return;
+      return;  // Stop if validation fails
     }
 
-    setIsSubmitting(true);
+    setIsSubmitting(true);  // Show loading state
 
-    // Simulate API call
+    // Simulate API call (in real app, send to backend)
     setTimeout(() => {
       console.log('Form submitted:', formData);
-      setIsSubmitting(false);
-      setIsSubmitted(true);
-      setFormData({
+      setIsSubmitting(false);  // Hide loading
+      setIsSubmitted(true);  // Show success message
+      setFormData({  // Reset form
         name: '',
         email: '',
         subject: '',

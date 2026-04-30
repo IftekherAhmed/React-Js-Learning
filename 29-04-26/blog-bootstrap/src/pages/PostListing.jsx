@@ -6,20 +6,22 @@ import { ChevronLeft, ChevronRight } from 'lucide-react';
 const PostListing = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [currentPage, setCurrentPage] = useState(1);
-  const postsPerPage = 9;
+  const [currentPage, setCurrentPage] = useState(1);  // Track current page
+  const postsPerPage = 9;  // Number of posts per page
 
+  // Update page title when user changes page
   useEffect(() => {
     document.title = `Blog - Page ${currentPage} | BlogHub`;
-  }, [currentPage]);
+  }, [currentPage]);  // Runs when currentPage changes
 
+  // Fetch all posts once on mount
   useEffect(() => {
     const fetchPosts = async () => {
       setLoading(true);
       try {
         const response = await fetch('https://jsonplaceholder.typicode.com/posts');
         const data = await response.json();
-        setPosts(data);
+        setPosts(data);  // Store all 100 posts
       } catch (error) {
         console.error('Error fetching posts:', error);
       } finally {
@@ -30,11 +32,13 @@ const PostListing = () => {
     fetchPosts();
   }, []);
 
+  // Calculate posts for current page
   const indexOfLastPost = currentPage * postsPerPage;
   const indexOfFirstPost = indexOfLastPost - postsPerPage;
   const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
   const totalPages = Math.ceil(posts.length / postsPerPage);
 
+  // Handle page change - scrolls to top
   const paginate = (pageNumber) => {
     setCurrentPage(pageNumber);
     window.scrollTo({ top: 0, behavior: 'smooth' });

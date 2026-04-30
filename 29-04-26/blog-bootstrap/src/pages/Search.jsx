@@ -2,15 +2,18 @@ import { useState, useEffect } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import PostCard from '../components/PostCard';
 import SkeletonLoader from '../components/SkeletonLoader';
-import { Search as SearchIcon } from 'lucide-react';
+import { Search as SearchIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Search = () => {
-  const [searchParams, setSearchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();  // Read ?q= from URL
   const [query, setQuery] = useState(searchParams.get('q') || '');
   const [posts, setPosts] = useState([]);
   const [allPosts, setAllPosts] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [currentPage, setCurrentPage] = useState(1);
+  const postsPerPage = 9;
 
+  // Fetch all posts once on mount - used for client-side filtering
   useEffect(() => {
     const fetchPosts = async () => {
       try {
@@ -25,12 +28,14 @@ const Search = () => {
     fetchPosts();
   }, []);
 
+  // Filter posts when URL query parameter changes
   useEffect(() => {
     const urlQuery = searchParams.get('q');
     if (urlQuery) {
       setQuery(urlQuery);
       setLoading(true);
 
+      // Filter posts by title or body
       const filtered = allPosts.filter(
         (post) =>
           post.title.toLowerCase().includes(urlQuery.toLowerCase()) ||
@@ -40,20 +45,35 @@ const Search = () => {
       setPosts(filtered);
       setLoading(false);
     }
-  }, [searchParams, allPosts]);
+  }, [searchParams, allPosts]);  // Runs when URL changes or posts load
 
+  // Update URL when user types in search box
   const handleSearch = (e) => {
     setQuery(e.target.value);
-    setSearchParams(e.target.value ? { q: e.target.value } : {});
+    setSearchParams(e.target.value ? { q: e.target.value } : {});  // Update ?q= in URL
+    setCurrentPage(1);  // Reset to page 1 when search changes
   };
 
+  // Calculate posts for current page
+  const indexOfLastPost = currentPage * postsPerPage;
+  const indexOfFirstPost = indexOfLastPost - postsPerPage;
+  const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
+  const totalPages = Math.ceil(posts.length / postsPerPage);
+
+  // Handle page change - scrolls to top
+  const paginate = (pageNumber) => {
+    setCurrentPage(pageNumber);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  // Update page title based on search query
   useEffect(() => {
     if (query) {
-      document.title = `Search: "${query}" | BlogHub`;
+      document.title = `Search: "${query}" - Page ${currentPage} | BlogHub`;
     } else {
       document.title = 'Search Posts | BlogHub';
     }
-  }, [query]);
+  }, [query, currentPage]);
 
   return (
     <div className="bg-light py-5">
@@ -79,7 +99,7 @@ const Search = () => {
 
         {loading ? (
           <div className="row g-4">
-            {[1, 2, 3].map((i) => (
+            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
               <div key={i} className="col-12 col-md-6 col-lg-4">
                 <SkeletonLoader key={i} type="card" />
               </div>
@@ -95,13 +115,43 @@ const Search = () => {
             </div>
 
             {posts.length > 0 ? (
-              <div className="row g-4">
-                {posts.map((post) => (
-                  <div key={post.id} className="col-12 col-md-6 col-lg-4">
-                    <PostCard post={post} />
-                  </div>
-                ))}
-              </div>
+              <>
+                <div className="row g-4">
+                  {currentPosts.map((post) => (
+                    <div key={post.id} className="col-12 col-md-6 col-lg-4">
+                      <PostCard post={post} />
+                    </div>
+                  ))}
+                </div>
+
+                <div className="d-flex justify-content-center align-items-center gap-2 mt-5">
+                  <button
+                    onClick={() => paginate(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="btn btn-outline-secondary"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
+                    <button
+                      key={number}
+                      onClick={() => paginate(number)}
+                      className={`btn ${currentPage === number ? 'btn-primary' : 'btn-outline-primary'}`}
+                    >
+                      {number}
+                    </button>
+                  ))}
+
+                  <button
+                    onClick={() => paginate(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="btn btn-outline-secondary"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </div>
+              </>
             ) : (
               <div className="text-center py-5">
                 <p className="fs-5 text-muted">
