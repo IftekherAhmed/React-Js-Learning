@@ -1,142 +1,98 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import PostCard from '../components/PostCard';
 import SkeletonLoader from '../components/SkeletonLoader';
+import useFetch from '../hooks/useFetch';
 import { categories } from '../data/categories';
 import { ArrowLeft, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CategoryArchive = () => {
-  const { slug } = useParams();  // Get :slug from URL (e.g., /category/technology)
-  const [posts, setPosts] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const { slug } = useParams();
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 9;
 
-  // Find current category object from imported categories array
-  const currentCategory = categories.find((cat) => cat.slug === slug);
+  // 1. Centralized Data Fetching
+  const { data: allPosts, loading } = useFetch('https://jsonplaceholder.typicode.com/posts');
 
-  // Update page title based on category name
-  useEffect(() => {
-    if (currentCategory) {
-      document.title = `${currentCategory.name} Posts - Page ${currentPage} | BlogHub`;
-    } else {
-      document.title = 'Category Not Found | BlogHub';
-    }
-  }, [currentCategory, currentPage]);
+  // 2. Memoized Category & Filtering (Prevents recalculating on every render)
+  const currentCategory = useMemo(() => categories.find(c => c.slug === slug), [slug]);
+  
+  const filteredPosts = useMemo(() => {
+    if (!allPosts || !currentCategory) return [];
+    const catIndex = categories.findIndex(c => c.slug === slug);
+    return allPosts.filter(post => post.id % categories.length === catIndex);
+  }, [allPosts, slug, currentCategory]);
 
-  // Fetch all posts and filter by category - runs when slug changes
-  useEffect(() => {
-    const fetchPosts = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/posts');
-        const data = await response.json();
-        
-        // Filter posts by category using modulo (API doesn't have real categories)
-        const categoryIndex = categories.findIndex((cat) => cat.slug === slug);
-        const filteredPosts = data.filter(
-          (post) => post.id % categories.length === categoryIndex
-        );
-        
-        setPosts(filteredPosts);  // Show all filtered posts
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // 3. Derived Pagination Data
+  const totalPages = Math.ceil(filteredPosts.length / postsPerPage);
+  const currentPosts = filteredPosts.slice((currentPage - 1) * postsPerPage, currentPage * postsPerPage);
 
-    if (slug) {
-      fetchPosts();
-    }
-  }, [slug]);  // ← Re-fetch when category changes
-
-  // Reset to page 1 when category changes
+  // SEO and Reset Page on Slug Change
   useEffect(() => {
     setCurrentPage(1);
-  }, [slug]);
+    document.title = currentCategory ? `${currentCategory.name} | BlogHub` : 'Not Found';
+  }, [slug, currentCategory]);
 
-  // Calculate posts for current page
-  const indexOfLastPost = currentPage * postsPerPage;
-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
-  const totalPages = Math.ceil(posts.length / postsPerPage);
-
-  // Handle page change - scrolls to top
-  const paginate = (pageNumber) => {
-    setCurrentPage(pageNumber);
+  const paginate = (num) => {
+    setCurrentPage(num);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  if (!currentCategory) {
-    return (
-      <div className="container py-5 text-center">
-        <h1 className="fw-bold mb-4">Category Not Found</h1>
-        <Link to="/" className="btn btn-primary">← Back to Home</Link>
-      </div>
-    );
-  }
+  if (!currentCategory) return (
+    <div className="container py-5 text-center">
+      <h1 className="fw-bold">Category Not Found</h1>
+      <Link to="/" className="btn btn-primary mt-3">Back Home</Link>
+    </div>
+  );
 
   return (
-    <div className="bg-light py-5">
+    <main className="bg-light py-5 min-vh-100">
       <div className="container">
-        <Link to="/" className="btn btn-link text-decoration-none mb-3">
-          <ArrowLeft size={20} className="me-2" />
-          Back to Home
+        <Link to="/" className="text-decoration-none d-flex align-items-center mb-4 text-muted">
+          <ArrowLeft size={18} className="me-2" /> Back to Home
         </Link>
         
-        <h1 className="fw-bold mb-2">{currentCategory.name}</h1>
-        <p className="text-muted mb-4">Browse all posts in the {currentCategory.name} category</p>
+        <header className="mb-5">
+          <h1 className="fw-bold display-5">{currentCategory.name}</h1>
+          <p className="lead text-muted">Discover the best content in {currentCategory.name}</p>
+        </header>
 
-        {loading ? (
-          <div className="row g-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-              <div key={i} className="col-12 col-md-6 col-lg-4">
-                <SkeletonLoader key={i} type="card" />
-              </div>
+        <div className="row g-4">
+          {loading ? (
+            Array(postsPerPage).fill(0).map((_, i) => (
+              <div key={i} className="col-12 col-md-6 col-lg-4"><SkeletonLoader type="card" /></div>
+            ))
+          ) : (
+            currentPosts.map(post => (
+              <div key={post.id} className="col-12 col-md-6 col-lg-4"><PostCard post={post} /></div>
+            ))
+          )}
+        </div>
+
+        {/* 4. Cleaner Pagination UI */}
+        {!loading && totalPages > 1 && (
+          <nav className="d-flex justify-content-center align-items-center gap-2 mt-5">
+            <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} className="btn btn-white shadow-sm border">
+              <ChevronLeft size={20} />
+            </button>
+
+            {Array.from({ length: totalPages }, (_, i) => i + 1).map(num => (
+              <button 
+                key={num} 
+                onClick={() => paginate(num)} 
+                className={`btn ${currentPage === num ? 'btn-primary' : 'btn-white shadow-sm border'}`}
+              >
+                {num}
+              </button>
             ))}
-          </div>
-        ) : (
-          <>
-            <div className="row g-4">
-              {currentPosts.map((post) => (
-                <div key={post.id} className="col-12 col-md-6 col-lg-4">
-                  <PostCard post={post} />
-                </div>
-              ))}
-            </div>
 
-            <div className="d-flex justify-content-center align-items-center gap-2 mt-5">
-              <button
-                onClick={() => paginate(currentPage - 1)}
-                disabled={currentPage === 1}
-                className="btn btn-outline-secondary"
-              >
-                <ChevronLeft size={20} />
-              </button>
-
-              {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
-                <button
-                  key={number}
-                  onClick={() => paginate(number)}
-                  className={`btn ${currentPage === number ? 'btn-primary' : 'btn-outline-primary'}`}
-                >
-                  {number}
-                </button>
-              ))}
-
-              <button
-                onClick={() => paginate(currentPage + 1)}
-                disabled={currentPage === totalPages}
-                className="btn btn-outline-secondary"
-              >
-                <ChevronRight size={20} />
-              </button>
-            </div>
-          </>
+            <button onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages} className="btn btn-white shadow-sm border">
+              <ChevronRight size={20} />
+            </button>
+          </nav>
         )}
       </div>
-    </div>
+    </main>
   );
 };
 

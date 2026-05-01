@@ -1,46 +1,30 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 
-const useFetch = (url, options = {}) => {
-  const [data, setData] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(null);
+const useFetch = (url) => {
+  const [state, setState] = useState({ data: null, loading: true, error: null });
 
-  const fetchData = async () => {
-    setLoading(true);
-    setError(null);
+  // 1. Memoize the fetch function so it doesn't change on every render
+  const executeFetch = useCallback(async () => {
+    setState(prev => ({ ...prev, loading: true, error: null }));
     
     try {
-      const response = await fetch(url, {
-        ...options,
-        headers: {
-          'Content-Type': 'application/json',
-          ...options.headers,
-        },
-      });
-
-      if (!response.ok) {
-        throw new Error(`HTTP error! status: ${response.status}`);
-      }
-
-      const result = await response.json();
-      setData(result);
+      const response = await fetch(url);
+      if (!response.ok) throw new Error(`Error: ${response.status}`);
+      
+      const data = await response.json();
+      setState({ data, loading: false, error: null });
     } catch (err) {
-      setError(err.message);
-      console.error('Fetch error:', err);
-    } finally {
-      setLoading(false);
+      setState({ data: null, loading: false, error: err.message });
     }
-  };
+  }, [url]); // Only recreate if the URL changes
 
+  // 2. Trigger fetch on mount or URL change
   useEffect(() => {
-    fetchData();
-  }, [url]);
+    executeFetch();
+  }, [executeFetch]);
 
-  const refetch = () => {
-    fetchData();
-  };
-
-  return { data, loading, error, refetch };
+  // 3. Spread state to return { data, loading, error } + refetch
+  return { ...state, refetch: executeFetch };
 };
 
 export default useFetch;

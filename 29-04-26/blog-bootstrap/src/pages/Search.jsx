@@ -1,173 +1,133 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useSearchParams, Link } from 'react-router-dom';
 import PostCard from '../components/PostCard';
 import SkeletonLoader from '../components/SkeletonLoader';
+import useFetch from '../hooks/useFetch';
 import { Search as SearchIcon, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const Search = () => {
-  const [searchParams, setSearchParams] = useSearchParams();  // Read ?q= from URL
-  const [query, setQuery] = useState(searchParams.get('q') || '');
-  const [posts, setPosts] = useState([]);
-  const [allPosts, setAllPosts] = useState([]);
-  const [loading, setLoading] = useState(false);
+  const [searchParams, setSearchParams] = useSearchParams();
   const [currentPage, setCurrentPage] = useState(1);
   const postsPerPage = 9;
 
-  // Fetch all posts once on mount - used for client-side filtering
-  useEffect(() => {
-    const fetchPosts = async () => {
-      try {
-        const response = await fetch('https://jsonplaceholder.typicode.com/posts');
-        const data = await response.json();
-        setAllPosts(data);
-      } catch (error) {
-        console.error('Error fetching posts:', error);
-      }
+  // 1. Always fetch the "Source of Truth"
+  const { data: allPosts, loading: fetchLoading } = useFetch('https://jsonplaceholder.typicode.com/posts');
+
+  // 2. Sync local input with URL (This allows the search to be bookmarkable)
+  const query = searchParams.get('q') || '';
+
+  // 3. Derived Data: Filter results automatically when query or allPosts change
+  const filteredPosts = useMemo(() => {
+    if (!allPosts || !query) return [];
+    const lowerQuery = query.toLowerCase();
+    return allPosts.filter(post => 
+      post.title.toLowerCase().includes(lowerQuery) || 
+      post.body.toLowerCase().includes(lowerQuery)
+    );
+  }, [allPosts, query]);
+
+  // 4. Derived Data: Pagination
+  const { currentPosts, totalPages } = useMemo(() => {
+    const total = Math.ceil(filteredPosts.length / postsPerPage);
+    const start = (currentPage - 1) * postsPerPage;
+    return {
+      currentPosts: filteredPosts.slice(start, start + postsPerPage),
+      totalPages: total
     };
+  }, [filteredPosts, currentPage]);
 
-    fetchPosts();
-  }, []);
-
-  // Filter posts when URL query parameter changes
-  useEffect(() => {
-    const urlQuery = searchParams.get('q');
-    if (urlQuery) {
-      setQuery(urlQuery);
-      setLoading(true);
-
-      // Filter posts by title or body
-      const filtered = allPosts.filter(
-        (post) =>
-          post.title.toLowerCase().includes(urlQuery.toLowerCase()) ||
-          post.body.toLowerCase().includes(urlQuery.toLowerCase())
-      );
-
-      setPosts(filtered);
-      setLoading(false);
-    }
-  }, [searchParams, allPosts]);  // Runs when URL changes or posts load
-
-  // Update URL when user types in search box
   const handleSearch = (e) => {
-    setQuery(e.target.value);
-    setSearchParams(e.target.value ? { q: e.target.value } : {});  // Update ?q= in URL
-    setCurrentPage(1);  // Reset to page 1 when search changes
+    const value = e.target.value;
+    setSearchParams(value ? { q: value } : {});
+    setCurrentPage(1); // Reset to page 1 on new search
   };
 
-  // Calculate posts for current page
-  const indexOfLastPost = currentPage * postsPerPage;
-  const indexOfFirstPost = indexOfLastPost - postsPerPage;
-  const currentPosts = posts.slice(indexOfFirstPost, indexOfLastPost);
-  const totalPages = Math.ceil(posts.length / postsPerPage);
-
-  // Handle page change - scrolls to top
-  const paginate = (pageNumber) => {
-    setCurrentPage(pageNumber);
+  const paginate = (num) => {
+    setCurrentPage(num);
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
-  // Update page title based on search query
   useEffect(() => {
-    if (query) {
-      document.title = `Search: "${query}" - Page ${currentPage} | BlogHub`;
-    } else {
-      document.title = 'Search Posts | BlogHub';
-    }
-  }, [query, currentPage]);
+    document.title = query ? `Search: ${query} | BlogHub` : 'Search Posts | BlogHub';
+  }, [query]);
 
   return (
-    <div className="bg-light py-5">
+    <main className="bg-light py-5 min-vh-100">
       <div className="container">
-        <h1 className="fw-bold mb-4">Search Posts</h1>
+        <h1 className="fw-bold mb-4">Search Results</h1>
 
-        <div className="row justify-content-center mb-5">
-          <div className="col-md-12">
+        {/* Search Input Section */}
+        <div className="card border-0 shadow-sm mb-5">
+          <div className="card-body p-2">
             <div className="input-group input-group-lg">
-              <span className="input-group-text bg-white border-end-0">
+              <span className="input-group-text bg-transparent border-0">
                 <SearchIcon size={20} className="text-muted" />
               </span>
               <input
                 type="text"
                 value={query}
                 onChange={handleSearch}
-                placeholder="Search for posts..."
-                className="form-control border-start-0"
+                placeholder="Type to search insights..."
+                className="form-control border-0 shadow-none fs-5"
               />
             </div>
           </div>
         </div>
 
-        {loading ? (
+        {fetchLoading ? (
           <div className="row g-4">
-            {[1, 2, 3, 4, 5, 6, 7, 8, 9].map((i) => (
-              <div key={i} className="col-12 col-md-6 col-lg-4">
-                <SkeletonLoader key={i} type="card" />
-              </div>
+            {Array(6).fill(0).map((_, i) => (
+              <div key={i} className="col-12 col-md-6 col-lg-4"><SkeletonLoader type="card" /></div>
             ))}
           </div>
         ) : query ? (
           <>
-            <div className="mb-4">
-              <p className="fs-5 text-muted">
-                Found <span className="fw-bold text-primary">{posts.length}</span> result
-                {posts.length !== 1 ? 's' : ''} for "{query}"
+            <div className="d-flex justify-content-between align-items-center mb-4">
+              <p className="text-muted mb-0">
+                Found <strong>{filteredPosts.length}</strong> results for "{query}"
               </p>
             </div>
 
-            {posts.length > 0 ? (
+            {filteredPosts.length > 0 ? (
               <>
                 <div className="row g-4">
-                  {currentPosts.map((post) => (
+                  {currentPosts.map(post => (
                     <div key={post.id} className="col-12 col-md-6 col-lg-4">
                       <PostCard post={post} />
                     </div>
                   ))}
                 </div>
 
-                <div className="d-flex justify-content-center align-items-center gap-2 mt-5">
-                  <button
-                    onClick={() => paginate(currentPage - 1)}
-                    disabled={currentPage === 1}
-                    className="btn btn-outline-secondary"
-                  >
-                    <ChevronLeft size={20} />
-                  </button>
-
-                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((number) => (
-                    <button
-                      key={number}
-                      onClick={() => paginate(number)}
-                      className={`btn ${currentPage === number ? 'btn-primary' : 'btn-outline-primary'}`}
-                    >
-                      {number}
+                {/* Pagination */}
+                {totalPages > 1 && (
+                  <nav className="d-flex justify-content-center gap-2 mt-5">
+                    <button onClick={() => paginate(currentPage - 1)} disabled={currentPage === 1} className="btn btn-white border shadow-sm">
+                      <ChevronLeft size={18} />
                     </button>
-                  ))}
-
-                  <button
-                    onClick={() => paginate(currentPage + 1)}
-                    disabled={currentPage === totalPages}
-                    className="btn btn-outline-secondary"
-                  >
-                    <ChevronRight size={20} />
-                  </button>
-                </div>
+                    <span className="btn btn-white border shadow-sm disabled">
+                      {currentPage} / {totalPages}
+                    </span>
+                    <button onClick={() => paginate(currentPage + 1)} disabled={currentPage === totalPages} className="btn btn-white border shadow-sm">
+                      <ChevronRight size={18} />
+                    </button>
+                  </nav>
+                )}
               </>
             ) : (
               <div className="text-center py-5">
-                <p className="fs-5 text-muted">
-                  No posts found matching "{query}". Try a different search term.
-                </p>
-                <Link to="/blog" className="btn btn-primary">Browse All Posts</Link>
+                <h3 className="text-muted">No matches found</h3>
+                <p>Try checking your spelling or use different keywords.</p>
               </div>
             )}
           </>
         ) : (
-          <div className="text-center py-5">
-            <p className="fs-5 text-muted">Enter a search term to find posts</p>
+          <div className="text-center py-5 opacity-50">
+            <SearchIcon size={48} className="mb-3" />
+            <p className="fs-5">Start typing to search our blog archives</p>
           </div>
         )}
       </div>
-    </div>
+    </main>
   );
 };
 

@@ -2,253 +2,125 @@ import { useState, useEffect } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react';
 
 const Contact = () => {
-  // Form state - single object for all fields
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    subject: '',
-    message: '',
-  });
-
-  // Validation and submission state
+  const [formData, setFormData] = useState({ name: '', email: '', subject: '', message: '' });
   const [errors, setErrors] = useState({});
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [isSubmitted, setIsSubmitted] = useState(false);
+  const [status, setStatus] = useState('idle'); // 'idle' | 'submitting' | 'submitted'
 
-  // Set page title on mount
   useEffect(() => {
-    document.title = 'Contact Us - BlogHub';
+    document.title = 'Contact Us | BlogHub';
   }, []);
 
-  // Validate form fields - returns errors object
-  const validateForm = () => {
+  // 1. Improved Validation Logic
+  const validate = () => {
     const newErrors = {};
-
-    if (!formData.name.trim()) {
-      newErrors.name = 'Name is required';
-    }
-
-    if (!formData.email.trim()) {
-      newErrors.email = 'Email is required';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) {
-      newErrors.email = 'Invalid email format';
-    }
-
-    if (!formData.subject.trim()) {
-      newErrors.subject = 'Subject is required';
-    }
-
-    if (!formData.message.trim()) {
-      newErrors.message = 'Message is required';
-    } else if (formData.message.trim().length < 10) {
-      newErrors.message = 'Message must be at least 10 characters';
-    }
-
+    if (!formData.name.trim()) newErrors.name = 'Name is required';
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(formData.email)) newErrors.email = 'Valid email is required';
+    if (!formData.subject.trim()) newErrors.subject = 'Subject is required';
+    if (formData.message.length < 10) newErrors.message = 'Message must be at least 10 characters';
+    
     setErrors(newErrors);
     return Object.keys(newErrors).length === 0;
   };
 
-  // Handle input change - updates formData when user types
-  // Uses dynamic [e.target.name] to update correct field
   const handleChange = (e) => {
-    setFormData({
-      ...formData,  // Keep existing fields
-      [e.target.name]: e.target.value,  // Update changed field
-    });
-    // Clear error when user starts typing
-    if (errors[e.target.name]) {
-      setErrors({
-        ...errors,
-        [e.target.name]: '',
-      });
-    }
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
+    // 2. Pro Tip: Clear error specifically for the field being typed in
+    if (errors[name]) setErrors(prev => ({ ...prev, [name]: '' }));
   };
 
-  // Handle form submission - validates and submits form
   const handleSubmit = async (e) => {
-    e.preventDefault();  // Prevent page reload on submit
+    e.preventDefault();
+    if (!validate()) return;
 
-    // Validate before submitting
-    if (!validateForm()) {
-      return;  // Stop if validation fails
-    }
+    setStatus('submitting');
+    
+    // Simulate API delay
+    await new Promise(resolve => setTimeout(resolve, 1500));
+    
+    console.log('Submitted Data:', formData);
+    setStatus('submitted');
+    setFormData({ name: '', email: '', subject: '', message: '' });
 
-    setIsSubmitting(true);  // Show loading state
-
-    // Simulate API call (in real app, send to backend)
-    setTimeout(() => {
-      console.log('Form submitted:', formData);
-      setIsSubmitting(false);  // Hide loading
-      setIsSubmitted(true);  // Show success message
-      setFormData({  // Reset form
-        name: '',
-        email: '',
-        subject: '',
-        message: '',
-      });
-
-      // Reset success message after 5 seconds
-      setTimeout(() => {
-        setIsSubmitted(false);
-      }, 5000);
-    }, 1500);
+    // Reset status after 5 seconds
+    setTimeout(() => setStatus('idle'), 5000);
   };
 
   return (
-    <div className="bg-light py-5">
+    <main className="bg-light py-5 min-vh-100">
       <div className="container">
-        <h1 className="display-5 fw-bold mb-5 text-center">Contact Us</h1>
+        <div className="text-center mb-5">
+          <h1 className="display-4 fw-bold">Get in Touch</h1>
+          <p className="text-muted lead">We usually respond within 24 hours.</p>
+        </div>
 
-        <div className="row g-4">
-          {/* Contact Information */}
+        <div className="row g-4 justify-content-center">
+          {/* Info Sidebar */}
           <div className="col-lg-4">
-            <div className="card border-0 shadow-sm h-100">
-              <div className="card-body p-4">
-                <h2 className="h4 fw-semibold mb-4">Get in Touch</h2>
-                <p className="text-muted mb-4">
-                  Have a question or want to work together? We'd love to hear from you.
-                </p>
-
-                <div className="d-flex align-items-start mb-4">
-                  <Mail className="text-primary me-3 mt-1" size={24} />
-                  <div>
-                    <h3 className="fw-semibold mb-1 fs-5">Email</h3>
-                    <p className="text-muted mb-0">contact@bloghub.com</p>
+            <div className="card border-0 shadow-sm bg-primary text-white h-100">
+              <div className="card-body p-4 p-xl-5">
+                <h3 className="mb-4">Contact Information</h3>
+                
+                {[
+                  { icon: Mail, label: 'Email', val: 'hello@bloghub.com' },
+                  { icon: Phone, label: 'Phone', val: '+1 (555) 000-1234' },
+                  { icon: MapPin, label: 'Office', val: 'San Francisco, CA' }
+                ].map((item, i) => (
+                  <div key={i} className="d-flex mb-4">
+                    <item.icon size={24} className="me-3 opacity-75" />
+                    <div>
+                      <p className="small mb-0 opacity-75">{item.label}</p>
+                      <p className="fw-medium mb-0">{item.val}</p>
+                    </div>
                   </div>
-                </div>
-
-                <div className="d-flex align-items-start mb-4">
-                  <Phone className="text-primary me-3 mt-1" size={24} />
-                  <div>
-                    <h3 className="fw-semibold mb-1 fs-5">Phone</h3>
-                    <p className="text-muted mb-0">+1 (555) 123-4567</p>
-                  </div>
-                </div>
-
-                <div className="d-flex align-items-start">
-                  <MapPin className="text-primary me-3 mt-1" size={24} />
-                  <div>
-                    <h3 className="fw-semibold mb-1 fs-5">Address</h3>
-                    <p className="text-muted mb-0">
-                      123 Blog Street<br />
-                      San Francisco, CA 94102
-                    </p>
-                  </div>
-                </div>
+                ))}
               </div>
             </div>
           </div>
 
-          {/* Contact Form */}
-          <div className="col-lg-8">
+          {/* Form Card */}
+          <div className="col-lg-7">
             <div className="card border-0 shadow-sm">
-              <div className="card-body p-4">
-                {isSubmitted ? (
-                  <div className="text-center py-5">
-                    <CheckCircle className="text-success mx-auto mb-3" size={64} />
-                    <h2 className="h4 fw-semibold mb-2">
-                      Message Sent!
-                    </h2>
-                    <p className="text-muted">
-                      Thank you for contacting us. We'll get back to you soon.
-                    </p>
+              <div className="card-body p-4 p-xl-5">
+                {status === 'submitted' ? (
+                  <div className="text-center py-4">
+                    <CheckCircle className="text-success mb-3" size={60} />
+                    <h3>Message Received!</h3>
+                    <p className="text-muted">Thanks for reaching out. Check your inbox soon.</p>
+                    <button onClick={() => setStatus('idle')} className="btn btn-outline-primary btn-sm mt-3">Send another</button>
                   </div>
                 ) : (
                   <form onSubmit={handleSubmit}>
-                    <div className="row g-3 mb-4">
-                      {/* Name */}
+                    <div className="row g-3 mb-3">
                       <div className="col-md-6">
-                        <label htmlFor="name" className="form-label">
-                          Name
-                        </label>
-                        <input
-                          type="text"
-                          id="name"
-                          name="name"
-                          value={formData.name}
-                          onChange={handleChange}
-                          className={`form-control ${errors.name ? 'is-invalid' : ''}`}
-                          placeholder="Your name"
-                        />
-                        {errors.name && (
-                          <div className="invalid-feedback">{errors.name}</div>
-                        )}
+                        <label className="form-label small fw-bold">Full Name</label>
+                        <input name="name" type="text" className={`form-control ${errors.name ? 'is-invalid' : ''}`} value={formData.name} onChange={handleChange} placeholder="John Doe" />
+                        {errors.name && <div className="invalid-feedback">{errors.name}</div>}
                       </div>
-
-                      {/* Email */}
                       <div className="col-md-6">
-                        <label htmlFor="email" className="form-label">
-                          Email
-                        </label>
-                        <input
-                          type="email"
-                          id="email"
-                          name="email"
-                          value={formData.email}
-                          onChange={handleChange}
-                          className={`form-control ${errors.email ? 'is-invalid' : ''}`}
-                          placeholder="your@email.com"
-                        />
-                        {errors.email && (
-                          <div className="invalid-feedback">{errors.email}</div>
-                        )}
+                        <label className="form-label small fw-bold">Email Address</label>
+                        <input name="email" type="email" className={`form-control ${errors.email ? 'is-invalid' : ''}`} value={formData.email} onChange={handleChange} placeholder="john@example.com" />
+                        {errors.email && <div className="invalid-feedback">{errors.email}</div>}
                       </div>
                     </div>
 
-                    {/* Subject */}
-                    <div className="mb-4">
-                      <label htmlFor="subject" className="form-label">
-                        Subject
-                      </label>
-                      <input
-                        type="text"
-                        id="subject"
-                        name="subject"
-                        value={formData.subject}
-                        onChange={handleChange}
-                        className={`form-control ${errors.subject ? 'is-invalid' : ''}`}
-                        placeholder="Subject of your message"
-                      />
-                      {errors.subject && (
-                        <div className="invalid-feedback">{errors.subject}</div>
-                      )}
+                    <div className="mb-3">
+                      <label className="form-label small fw-bold">Subject</label>
+                      <input name="subject" type="text" className={`form-control ${errors.subject ? 'is-invalid' : ''}`} value={formData.subject} onChange={handleChange} />
+                      {errors.subject && <div className="invalid-feedback">{errors.subject}</div>}
                     </div>
 
-                    {/* Message */}
                     <div className="mb-4">
-                      <label htmlFor="message" className="form-label">
-                        Message
-                      </label>
-                      <textarea
-                        id="message"
-                        name="message"
-                        value={formData.message}
-                        onChange={handleChange}
-                        rows="6"
-                        className={`form-control ${errors.message ? 'is-invalid' : ''}`}
-                        placeholder="Your message..."
-                      ></textarea>
-                      {errors.message && (
-                        <div className="invalid-feedback">{errors.message}</div>
-                      )}
+                      <label className="form-label small fw-bold">Message</label>
+                      <textarea name="message" rows="5" className={`form-control ${errors.message ? 'is-invalid' : ''}`} value={formData.message} onChange={handleChange}></textarea>
+                      {errors.message && <div className="invalid-feedback">{errors.message}</div>}
                     </div>
 
-                    {/* Submit Button */}
-                    <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="btn btn-primary btn-lg w-100 d-flex align-items-center justify-content-center"
-                    >
-                      {isSubmitting ? (
-                        <>
-                          <span className="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
-                          Sending...
-                        </>
+                    <button type="submit" disabled={status === 'submitting'} className="btn btn-primary btn-lg w-100 shadow-sm">
+                      {status === 'submitting' ? (
+                        <><span className="spinner-border spinner-border-sm me-2" /> Sending...</>
                       ) : (
-                        <>
-                          <Send size={20} className="me-2" />
-                          Send Message
-                        </>
+                        <><Send size={18} className="me-2" /> Send Message</>
                       )}
                     </button>
                   </form>
@@ -258,7 +130,7 @@ const Contact = () => {
           </div>
         </div>
       </div>
-    </div>
+    </main>
   );
 };
 

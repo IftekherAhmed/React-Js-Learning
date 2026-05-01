@@ -1,156 +1,99 @@
-import { useState, useEffect } from 'react';
+import { useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import SkeletonLoader from '../components/SkeletonLoader';
+import useFetch from '../hooks/useFetch';
 import { Calendar, Clock, User, ArrowLeft, Tag } from 'lucide-react';
 
 const PostDetail = () => {
-  const { id } = useParams();  // Get :id from URL (e.g., /post/5 → id = "5")
-  const [post, setPost] = useState(null);
-  const [loading, setLoading] = useState(true);
-
-  // Fetch single post by ID - re-runs when :id changes in URL
-  // Dependency [id] means: fetch again if user navigates to different post
-  useEffect(() => {
-    const fetchPost = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
-        const data = await response.json();
-        setPost(data);  // Update state → triggers re-render with post data
-      } catch (error) {
-        console.error('Error fetching post:', error);
-      } finally {
-        setLoading(false);  // Hide loading spinner
-      }
-    };
-
-    fetchPost();
-  }, [id]);  // ← IMPORTANT: Re-fetches when id changes
-
-  // Update page title when post data loads
-  useEffect(() => {
-    if (post) {
-      document.title = `${post.title} - BlogHub`;
-    } else {
-      document.title = 'Loading Post... | BlogHub';
-    }
-  }, [post]);  // Runs when post state changes
-
-  if (loading) {
-    return <SkeletonLoader type="detail" />;
-  }
-
-  if (!post) {
-    return (
-      <div className="container py-5 text-center">
-        <h1 className="fw-bold mb-4">Post Not Found</h1>
-        <Link to="/blog" className="btn btn-primary">← Back to Blog</Link>
-      </div>
-    );
-  }
-
-  // Calculate reading time based on post body length (200 words per minute)
-  const readingTime = Math.max(3, Math.floor((post.body?.length || 100) / 200));
+  const { id } = useParams();
   
-  // Format date
-  const formattedDate = new Date().toLocaleDateString('en-US', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  // 1. One-line fetch using our custom hook
+  const { data: post, loading, error } = useFetch(`https://jsonplaceholder.typicode.com/posts/${id}`);
 
-  // Assign category
-  const categories = ['Technology', 'Design', 'Programming', 'Lifestyle', 'Business', 'Health'];
-  const category = categories[post.id % categories.length];
+  // 2. Grouped and memoized metadata
+  const meta = useMemo(() => {
+    if (!post) return null;
+    const categories = ['Technology', 'Design', 'Programming', 'Lifestyle', 'Business', 'Health'];
+    return {
+      readingTime: Math.max(3, Math.floor((post.body?.length || 100) / 200)),
+      date: new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }),
+      category: categories[post.id % categories.length]
+    };
+  }, [post]);
+
+  // 3. Dynamic Page Title
+  useEffect(() => {
+    document.title = post ? `${post.title} | BlogHub` : 'Loading...';
+  }, [post]);
+
+  if (loading) return <SkeletonLoader type="detail" />;
+  if (error || !post) return (
+    <div className="container py-5 text-center">
+      <h2 className="mb-4">Post not found</h2>
+      <Link to="/blog" className="btn btn-primary">Back to Blog</Link>
+    </div>
+  );
 
   return (
-    <div className="bg-light py-5">
+    <main className="bg-light py-5 min-vh-100">
       <div className="container">
-        {/* Back Button */}
-        <Link to="/blog" className="btn btn-link text-decoration-none mb-4">
-          <ArrowLeft size={20} className="me-2" />
-          Back to Blog
+        <Link to="/blog" className="text-decoration-none d-inline-flex align-items-center mb-4 text-muted">
+          <ArrowLeft size={18} className="me-2" /> Back to Blog
         </Link>
 
-        {/* Post Header */}
-        <article className="card border-0 shadow">
-          {/* Post Image Placeholder */}
-          <div className="card-header bg-primary text-white d-flex align-items-center justify-content-center" style={{height: '300px'}}>
+        <article className="card border-0 shadow-lg overflow-hidden">
+          {/* Header Visual */}
+          <div className="bg-primary bg-gradient text-white d-flex align-items-center justify-content-center" style={{ height: '350px' }}>
             <span className="display-1 fw-bold opacity-25">{post.id}</span>
           </div>
 
-          {/* Post Content */}
-          <div className="card-body p-5">
-            {/* Category */}
-            <div className="mb-3">
-              <span className="badge bg-primary">
-                <Tag size={14} className="me-1" />
-                {category}
-              </span>
+          <div className="card-body p-4 p-lg-5">
+            <span className="badge bg-primary-soft text-primary rounded-pill mb-3">
+              <Tag size={14} className="me-1" /> {meta.category}
+            </span>
+
+            <h1 className="display-5 fw-bold mb-4">{post.title}</h1>
+
+            {/* Author & Info Bar */}
+            <div className="d-flex flex-wrap gap-4 text-muted mb-5 pb-4 border-bottom">
+              <span className="d-flex align-items-center"><User size={18} className="me-2" /> Author {post.userId}</span>
+              <span className="d-flex align-items-center"><Calendar size={18} className="me-2" /> {meta.date}</span>
+              <span className="d-flex align-items-center"><Clock size={18} className="me-2" /> {meta.readingTime} min read</span>
             </div>
 
-            {/* Title */}
-            <h1 className="card-title fw-bold mb-4">{post.title}</h1>
-
-            {/* Meta Information */}
-            <div className="d-flex flex-wrap gap-4 text-muted mb-4 pb-4 border-bottom">
-              <div className="d-flex align-items-center">
-                <User size={18} className="me-2" />
-                <span>Author {post.userId}</span>
-              </div>
-              <div className="d-flex align-items-center">
-                <Calendar size={18} className="me-2" />
-                <span>{formattedDate}</span>
-              </div>
-              <div className="d-flex align-items-center">
-                <Clock size={18} className="me-2" />
-                <span>{readingTime} min read</span>
-              </div>
-            </div>
-
-            {/* Post Body */}
-            <div className="card-text">
-              <p className="fs-5 lh-lg">{post.body}</p>
-              <p className="fs-5 lh-lg mt-4">
-                Lorem ipsum dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor 
-                incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud 
-                exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat.
-              </p>
-              <p className="fs-5 lh-lg mt-4">
+            {/* Body Content */}
+            <div className="post-content fs-5 lh-lg">
+              <p className="mb-4">{post.body}</p>
+              <p className="text-muted italic">
+                {/* Simulated extended content for visual weight */}
                 Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu 
-                fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in 
-                culpa qui officia deserunt mollit anim id est laborum.
+                fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident.
               </p>
             </div>
           </div>
         </article>
 
         {/* Related Posts Section */}
-        <div className="mt-5">
-          <h2 className="fw-bold mb-4">Related Posts</h2>
+        <section className="mt-5">
+          <h3 className="fw-bold mb-4">Related Posts</h3>
           <div className="row g-4">
-            {[1, 2].map((i) => {
-              const relatedId = (parseInt(id) + i) % 100 || 1;
+            {[1, 2].map((offset) => {
+              const relatedId = (parseInt(id) + offset) % 100 || 1;
               return (
-                <div key={i} className="col-md-6">
-                  <Link
-                    to={`/post/${relatedId}`}
-                    className="card border-0 shadow-sm text-decoration-none text-dark h-100"
-                  >
+                <div key={offset} className="col-md-6">
+                  <Link to={`/post/${relatedId}`} className="card border-0 shadow-sm text-decoration-none text-dark h-100 hover-lift">
                     <div className="card-body">
-                      <h5 className="card-title fw-semibold mb-2">Related Post #{relatedId}</h5>
-                      <p className="card-text text-muted">
-                        Click to read this related article and expand your knowledge on this topic.
-                      </p>
+                      <h5 className="fw-bold mb-2">Continue Reading Post #{relatedId}</h5>
+                      <p className="text-muted small mb-0">Expand your knowledge on this topic with our curated recommendations.</p>
                     </div>
                   </Link>
                 </div>
               );
             })}
           </div>
-        </div>
+        </section>
       </div>
-    </div>
+    </main>
   );
 };
 
