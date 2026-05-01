@@ -41,7 +41,7 @@ const PostDetail = () => {
           <ArrowLeft size={18} className="me-2" /> Back to Blog
         </Link>
 
-        <article className="card border-0 shadow-lg overflow-hidden">
+        <article className="card border overflow-hidden">
           {/* Header Visual */}
           <div className="bg-primary bg-gradient text-white d-flex align-items-center justify-content-center" style={{ height: '350px' }}>
             <span className="display-1 fw-bold opacity-25">{post.id}</span>
