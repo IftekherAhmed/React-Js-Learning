@@ -24,13 +24,13 @@ const PostCard = memo(({ post }) => {
 
       <div className="card-body d-flex flex-column">
         <div className="mb-2">
-          <span className="badge rounded-pill bg-primary-soft text-primary px-3">
+          <span className="badge border rounded-pill bg-primary-soft text-primary px-3">
             <Tag size={12} className="me-1" /> {postMeta.catName}
           </span>
         </div>
 
         <Link to={`/post/${post.id}`} className="text-decoration-none">
-          <h5 className="card-title text-dark fw-bold mb-3 line-clamp-2">{post.title}</h5>
+          <h5 className="card-title text-dark fw-bold mb-3 line-clamp-2 text-capitalize">{post.title}</h5>
         </Link>
 
         <p className="card-text text-muted mb-4 line-clamp-3">

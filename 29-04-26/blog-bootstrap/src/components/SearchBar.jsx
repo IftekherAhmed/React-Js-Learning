@@ -8,6 +8,7 @@ const SearchBar = () => {
   const [isSearchFocused, setIsSearchFocused] = useState(false);
   const navigate = useNavigate();
 
+  // Fetch all posts on loading for client-side search 
   useEffect(() => {
     fetch('https://jsonplaceholder.typicode.com/posts')
       .then(res => res.json())
@@ -15,6 +16,8 @@ const SearchBar = () => {
       .catch(err => console.error(err));
   }, []);
 
+  // Memoize search results to optimize performance
+  // On search query change, filter posts and return top 5 results
   const searchResults = useMemo(() => {
     if (!searchQuery.trim()) return [];
     return allPosts
@@ -22,6 +25,7 @@ const SearchBar = () => {
       .slice(0, 5);
   }, [searchQuery, allPosts]);
 
+  // On Submitting the search form it will navigate to the search results page with the query as a parameter
   const handleSearch = (e, postId) => {
     if (e) e.preventDefault();
     const path = postId ? `/post/${postId}` : `/search?q=${searchQuery}`;
@@ -47,6 +51,7 @@ const SearchBar = () => {
         </div>
       </form>
 
+      {/* Search Results Dropdown */}
       {isSearchFocused && searchQuery && (
         <div className="card shadow position-absolute mt-2 end-0" style={{ width: '350px', zIndex: 1000 }}>
           <div className="list-group list-group-flush">
@@ -70,6 +75,7 @@ const SearchBar = () => {
             ) : (
               <div className="p-3 text-center text-muted">No results found</div>
             )}
+            {/* End Search Results Dropdown */}
           </div>
         </div>
       )}

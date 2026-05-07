@@ -48,11 +48,11 @@ const PostDetail = () => {
           </div>
 
           <div className="card-body p-4 p-lg-5">
-            <span className="badge bg-primary-soft text-primary rounded-pill mb-3">
+            <span className="badge border bg-primary-soft text-primary rounded-pill mb-3">
               <Tag size={14} className="me-1" /> {meta.category}
             </span>
 
-            <h1 className="display-5 fw-bold mb-4">{post.title}</h1>
+            <h1 className="display-5 fw-bold mb-4 text-capitalize">{post.title}</h1>
 
             {/* Author & Info Bar */}
             <div className="d-flex flex-wrap gap-4 text-muted mb-5 pb-4 border-bottom">
